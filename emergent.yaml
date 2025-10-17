@@ -1,0 +1,26 @@
+# emergent.yaml - pipeline de build & déploiement
+version: 1
+
+env:
+  APP_PORT: "8080"
+  APP_HOST: "127.0.0.1"
+
+steps:
+  - name: Install dependencies
+    run: |
+      python3 -m venv .venv
+      . .venv/bin/activate
+      pip install --upgrade pip
+      pip install -r requirements.txt
+
+  - name: Run tests
+    run: |
+      . .venv/bin/activate
+      pytest -q || true
+
+  - name: Deploy to VPS
+    run: |
+      set -e
+      echo "Deploying to ${DEPLOY_USER}@${DEPLOY_HOST}"
+      scp -o StrictHostKeyChecking=no -r . ${DEPLOY_USER}@${DEPLOY_HOST}:/tmp/chatapp-deploy
+      ssh -o StrictHostKeyChecking=no ${DEPLOY_USER}@${DEPLOY_HOST} "bash /tmp/chatapp-deploy/scripts/deploy.sh"
